@@ -78,6 +78,8 @@ the recommended setting.
 | `DisableLogs` | — | `false` | Skips installing the log appender |
 | `SendDefaultPII` | — | `false` | Sends request headers verbatim instead of filtering them |
 | `Synchronous` | — | `false` | Sends inline instead of via the background sender |
+| `DisableSourceContext` | — | `false` | Stops reading source files for the lines around each frame |
+| `ContextLines` | — | `5` | Source lines sent either side of a stack frame |
 | `OpenTimeout` | — | `5s` | Connection setup timeout |
 | `ReadTimeout` | — | `10s` | Whole-request timeout |
 | `QueueSize` | — | `1000` | Background sender backlog; captures past it are dropped |

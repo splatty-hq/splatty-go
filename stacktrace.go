@@ -13,6 +13,11 @@ type Frame struct {
 	Function string `json:"function"`
 	Lineno   int    `json:"lineno"`
 	InApp    bool   `json:"in_app"`
+
+	// Source lines around Lineno, present when the file could be read.
+	PreContext  []string `json:"pre_context,omitempty"`
+	ContextLine string   `json:"context_line,omitempty"`
+	PostContext []string `json:"post_context,omitempty"`
 }
 
 const maxStackDepth = 64

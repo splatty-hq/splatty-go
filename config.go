@@ -37,6 +37,13 @@ type Config struct {
 	// Synchronous sends events inline instead of handing them to the background
 	// sender. Useful in tests and short-lived CLIs.
 	Synchronous bool
+	// DisableSourceContext stops the SDK reading source files to attach the
+	// lines around each stack frame.
+	DisableSourceContext bool
+
+	// ContextLines is how many source lines to send either side of a frame.
+	// Defaults to 5.
+	ContextLines int
 
 	// OpenTimeout bounds connection setup. Defaults to 5s.
 	OpenTimeout time.Duration
@@ -55,6 +62,19 @@ type Config struct {
 	BeforeSend func(*Event) *Event
 	// LogOptions tunes the log appender.
 	LogOptions LogOptions
+}
+
+// contextLines resolves the source-context window. It reads the config
+// directly rather than through applyDefaults so that a hand-built Config still
+// gets context.
+func (c *Config) contextLines() int {
+	if c.DisableSourceContext {
+		return 0
+	}
+	if c.ContextLines <= 0 {
+		return defaultContextLines
+	}
+	return c.ContextLines
 }
 
 func (c *Config) applyDefaults() {

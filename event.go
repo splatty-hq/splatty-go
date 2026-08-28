@@ -109,7 +109,9 @@ func NewExceptionEvent(err error, cfg *Config, scope Scope, skip int) *Event {
 	if event.Level == "" {
 		event.Level = LevelError
 	}
-	event.Exception = &ExceptionValues{Values: exceptionChain(err, captureStack(skip+1))}
+	stack := captureStack(skip + 1)
+	addSourceContext(stack, cfg)
+	event.Exception = &ExceptionValues{Values: exceptionChain(err, stack)}
 	return event
 }
 

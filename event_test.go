@@ -14,6 +14,56 @@ func failing() error {
 	return errors.New("boom")
 }
 
+func TestNewExceptionEventAttachesSourceContext(t *testing.T) {
+	sourceCache.reset()
+	event := NewExceptionEvent(failing(), testConfig(), Scope{}, 0)
+
+	frames := event.Exception.Values[0].Stacktrace.Frames
+	frame := frames[len(frames)-1]
+	if !strings.HasSuffix(frame.AbsPath, "event_test.go") {
+		t.Fatalf("AbsPath = %q, want this test file", frame.AbsPath)
+	}
+	if want := "\tevent := NewExceptionEvent(failing(), testConfig(), Scope{}, 0)"; frame.ContextLine != want {
+		t.Errorf("ContextLine = %q, want %q", frame.ContextLine, want)
+	}
+	if got := len(frame.PreContext); got != defaultContextLines {
+		t.Errorf("len(PreContext) = %d, want %d", got, defaultContextLines)
+	}
+	if got := len(frame.PostContext); got != defaultContextLines {
+		t.Errorf("len(PostContext) = %d, want %d", got, defaultContextLines)
+	}
+	if want := "\tsourceCache.reset()"; frame.PreContext[len(frame.PreContext)-1] != want {
+		t.Errorf("PreContext last = %q, want %q", frame.PreContext[len(frame.PreContext)-1], want)
+	}
+}
+
+func TestDisableSourceContextLeavesFramesBare(t *testing.T) {
+	sourceCache.reset()
+	cfg := testConfig(func(c *Config) { c.DisableSourceContext = true })
+	event := NewExceptionEvent(failing(), cfg, Scope{}, 0)
+
+	for _, frame := range event.Exception.Values[0].Stacktrace.Frames {
+		if frame.ContextLine != "" || len(frame.PreContext) > 0 || len(frame.PostContext) > 0 {
+			t.Fatalf("frame %+v carries source context, want none", frame)
+		}
+	}
+}
+
+func TestContextLinesOverridesTheWindow(t *testing.T) {
+	sourceCache.reset()
+	cfg := testConfig(func(c *Config) { c.ContextLines = 1 })
+	event := NewExceptionEvent(failing(), cfg, Scope{}, 0)
+
+	frames := event.Exception.Values[0].Stacktrace.Frames
+	frame := frames[len(frames)-1]
+	if got := len(frame.PreContext); got != 1 {
+		t.Errorf("len(PreContext) = %d, want 1", got)
+	}
+	if got := len(frame.PostContext); got != 1 {
+		t.Errorf("len(PostContext) = %d, want 1", got)
+	}
+}
+
 func TestNewExceptionEventBuildsPayload(t *testing.T) {
 	cfg := testConfig()
 	event := NewExceptionEvent(failing(), cfg, Scope{}, 0)
